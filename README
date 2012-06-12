@@ -1,8 +1,11 @@
 This RESTful api will give you access to the omniture api. Even though the omniture API is a RESTful service, grails' expertise with JSON handling allows client requests and responses to be handled much more easily.
 
+In order to use, please enter your omniture credentials into the /conf/Config.groovy in the appropriate placeholders
+
 To get the most popular
 /OmnitureGrails/reportSuite/mostpopular/<date>/<count> for example
 
 I deliberately left the whole report as JSON output instead of individual fields to let the client decide how best to use the data.
+
 
 On a groovy note, to create an array in the middle of a jsonbuilder use ([{}])
