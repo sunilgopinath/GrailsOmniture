@@ -6,23 +6,117 @@ import sun.misc.BASE64Encoder
 import sun.misc.CharacterEncoder
 import grails.converters.*
 import java.text.SimpleDateFormat;
+import groovy.json.*
 
 class ReportSuiteController {
 
     def index() {
-        
-        def tt =  grailsApplication.config.omniture.username
-        println tt
-        def pp = grailsApplication.config.omniture.password
-        println pp
-        def ee = grailsApplication.config.omniture.endpoint
-        print ee
-        def method = "Company.GetReportSuites"
-        def data = "{\"rs_types\":[\"standard\"]}"
+  
+        redirect(action: "list", params: params)
 
-        render getResult(method, data)
+    }
+
+    def list() {
+       
+        def method = "Company.GetReportSuites"
+        def data = [
+            rs_types: 'standard',
+        ]
+
+        render getResult(method, data.toString())
         
     }
+
+    def mostpopular() {
+
+        def today = new Date().format("yyyy-MM-dd")
+        def date = params['date']?: today.previous() // sensible default value
+        def count = params['count']?:"5"
+
+        // This is a multistep process involing requesting the report
+        // checking to see whether it is ready
+        // getting the value of the report
+
+        // Step 1. Requesting the report
+        def json = new JsonBuilder()
+        json.reportDescription {
+            reportSuiteID params['reportsuiteid']
+            dateFrom date
+            dateTo date
+            metrics ([
+                {
+                    id "pageViews"
+                },
+                {
+                    id "totalPageViews"
+                }
+            ])
+            elements ([
+                    {
+                      id "page"
+                    },
+                    {
+                       top count
+                    }
+            ])
+        }
+
+        def data = json.toString()
+        def result = getResult("Report.QueueRanked", data) // to give us page ranking
+        def slurper = new JsonSlurper()
+        def reportID = slurper.parseText(result.toString()).reportID
+
+
+        // Step 2. Check the report status
+        def reportId = [
+            reportID: reportID
+        ] as JSON
+        def status
+        def queuedReport
+        def tries = 0
+        while(status != "done" && tries < 10 || status == "failed") {
+            queuedReport = getResult("Report.GetStatus", reportId.toString())
+            status = slurper.parseText(queuedReport.toString()).status
+            tries++
+        }
+
+        // Step 3. print the report to the screen
+        def reportResults
+        if(status == "done") {
+            reportResults = getResult("Report.GetReport", reportId.toString())
+
+        } else {
+            reportResults = [
+                status: "report generation failed"
+            ]
+            
+        }
+
+        render reportResults
+
+    }
+
+
+    def getResult = { method, data ->
+
+        def endpoint = grailsApplication.config.omniture.endpoint
+
+        def url = new URL(endpoint + "?method=" + method);
+
+        def connection = url.openConnection();
+        connection.addRequestProperty("X-WSSE", getHeader());
+
+        connection.setDoOutput(true);
+        def wr = new OutputStreamWriter(connection.getOutputStream());
+        wr.write(data);
+        wr.flush();
+
+        InputStream ins = connection.getInputStream();
+        def text = new JSON().parse(ins, "UTF-8")
+        return text as JSON
+
+    }
+
 
     def getHeader = {
 
@@ -60,7 +154,7 @@ class ReportSuiteController {
     }
 
     def generateTimestamp = {
-        return new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'")    
+        return new Date().format("yyyy-MM-dd'T'HH:mm:ss'Z'")
     }
 
     def generateNonce = {
@@ -71,34 +165,4 @@ class ReportSuiteController {
         return toEncode.encodeBase64().toString()
     }
 
-    def mostpopular() {
-
-        def method = "Report.QueueTrended"
-        def data = params['data']
-
-    }
-
-    def getReport() {
-
-    }
-
-    def getResult = { method, data ->
-
-        def endpoint = grailsApplication.config.omniture.endpoint
-
-        def url = new URL(endpoint + "?method=" + method);
-
-        def connection = url.openConnection();
-        connection.addRequestProperty("X-WSSE", getHeader());
-
-        connection.setDoOutput(true);
-        def wr = new OutputStreamWriter(connection.getOutputStream());
-        wr.write(data);
-        wr.flush();
-
-        InputStream ins = connection.getInputStream();
-        def text = new JSON().parse(ins, "UTF-8")
-        return text as JSON
-
-    }
 }
