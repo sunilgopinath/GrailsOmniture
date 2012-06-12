@@ -9,15 +9,14 @@ import java.text.SimpleDateFormat;
 
 class ReportSuiteController {
 
-    def passwordCodec
-
-    String USERNAME = "cflanagan:New York Magazine";
-    String ENDPOINT = "https://beta-api.omniture.com/admin/1.3/rest/"; // san jose beta
-
-
     def index() {
         
-
+        def tt =  grailsApplication.config.omniture.username
+        println tt
+        def pp = grailsApplication.config.omniture.password
+        println pp
+        def ee = grailsApplication.config.omniture.endpoint
+        print ee
         def method = "Company.GetReportSuites"
         def data = "{\"rs_types\":[\"standard\"]}"
 
@@ -27,13 +26,16 @@ class ReportSuiteController {
 
     def getHeader = {
 
+        def username = grailsApplication.config.omniture.username
+        def password = grailsApplication.config.omniture.password
+
         byte[] nonceB = generateNonce();
         String nonce = base64Encode(nonceB);
         String created = generateTimestamp();
-        String password64 = getBase64Digest(nonceB, created.getBytes("UTF-8"), PASSWORD.getBytes("UTF-8"));
+        String password64 = getBase64Digest(nonceB, created.getBytes("UTF-8"), password.getBytes("UTF-8"));
 
         def header = new StringBuffer("UsernameToken Username=\"");
-        header << USERNAME
+        header << username
         header << "\", "
         header << "PasswordDigest=\""
         header << password64.trim()
@@ -82,7 +84,9 @@ class ReportSuiteController {
 
     def getResult = { method, data ->
 
-        def url = new URL(ENDPOINT + "?method=" + method);
+        def endpoint = grailsApplication.config.omniture.endpoint
+
+        def url = new URL(endpoint + "?method=" + method);
 
         def connection = url.openConnection();
         connection.addRequestProperty("X-WSSE", getHeader());

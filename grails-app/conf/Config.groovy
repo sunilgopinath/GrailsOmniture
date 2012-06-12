@@ -59,6 +59,11 @@ grails.exceptionresolver.params.exclude = ['password']
 // enable query caching by default
 grails.hibernate.cache.queries = true
 
+// Omniture API credentials
+omniture.username = 'cflanagan:New York Magazine'
+omniture.password = 'c2e98688087e4f1002e29cb3008f32f9'
+omniture.endpoint = 'https://beta-api.omniture.com/admin/1.3/rest/'
+
 // set per-environment serverURL stem for creating absolute links
 environments {
     development {
@@ -91,3 +96,5 @@ log4j = {
            'org.hibernate',
            'net.sf.ehcache.hibernate'
 }
+
+
