@@ -60,9 +60,9 @@ grails.exceptionresolver.params.exclude = ['password']
 grails.hibernate.cache.queries = true
 
 // Omniture API credentials
-omniture.username = 'cflanagan:New York Magazine'
-omniture.password = 'c2e98688087e4f1002e29cb3008f32f9'
-omniture.endpoint = 'https://beta-api.omniture.com/admin/1.3/rest/'
+omniture.username = ''
+omniture.password = ''
+omniture.endpoint = 'https://beta-api.omniture.com/admin/1.3/rest/' // sample endpoint
 
 // set per-environment serverURL stem for creating absolute links
 environments {
